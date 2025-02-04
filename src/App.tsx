@@ -1,15 +1,37 @@
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { Moon, Sun } from "lucide-react";
-import { SearchForm } from "./components/SearchForm";
+import SearchForm from './components/SearchForm';
 import { FlightList } from "./components/FlightList";
+import Airplane from './assets/airplane-svgrepo-com.svg'
 
 function App() {
-  const [darkMode, setDarkMode] = useState(true);
-  const [flights, setFlights] = useState([]); // new state for search results
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+  const [flights, setFlights] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
-    document.documentElement.classList.toggle("dark");
+  };
+
+  const handleSearch = async (searchResults: any) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setFlights(searchResults);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('An error occurred while searching flights'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -25,7 +47,10 @@ function App() {
               </div>
               <button
                 onClick={toggleDarkMode}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label={
+                  darkMode ? "Switch to light mode" : "Switch to dark mode"
+                }
               >
                 {darkMode ? (
                   <Sun className="h-5 w-5 text-gray-600 dark:text-gray-300" />
@@ -42,7 +67,7 @@ function App() {
             <div className="relative">
               <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                  src="https://source.unsplash.com/1600x400/?airplane,sky"
+                  src={Airplane}
                   alt="Airplane"
                   className="w-full h-64 object-cover rounded-lg opacity-20 dark:opacity-10"
                 />
@@ -51,13 +76,17 @@ function App() {
                 <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
                   Find Your Next Flight
                 </h1>
-                <SearchForm darkMode={darkMode} onSearch={setFlights} />
+                <SearchForm darkMode={darkMode} onSearch={handleSearch} />
               </div>
             </div>
           </div>
 
-          {/* Render flights once available */}
-          <FlightList flights={flights} loading={false} error={null} darkMode={darkMode} />
+          <FlightList
+            flights={flights}
+            loading={isLoading}
+            error={error}
+            darkMode={darkMode}
+          />
         </main>
       </div>
     </div>

@@ -1,86 +1,247 @@
-import React from 'react';
-import { Clock, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  Paper,
+  Box,
+  Typography,
+  Button,
+  Collapse,
+  Divider,
+  Grid,
+  Avatar,
+  Chip,
+  useTheme
+} from '@mui/material';
+import { format } from 'date-fns';
 
 interface Props {
-  flight: any; // assume flight now follows the search result structure
+  flight: any;
   darkMode: boolean;
 }
 
 export const FlightCard: React.FC<Props> = ({ flight, darkMode }) => {
-  // Extract values from the search result structure
-  const marketingCarrier = flight.legs[0].carriers.marketing[0];
-  const firstSegment = flight.legs[0].segments[0];
-  const lastLeg = flight.legs[flight.legs.length - 1];
-  const departureTime = new Date(flight.legs[0].departure).toLocaleTimeString();
-  const arrivalTime = new Date(lastLeg.arrival).toLocaleTimeString();
-  const durationMinutes = flight.legs[0].durationInMinutes;
-  const durationFormatted = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
-  console.log('Flight:', flight);
+  const theme = useTheme();
+  const [expanded, setExpanded] = useState(false);
+  const firstLeg = flight.legs[0];
+  const marketingCarrier = firstLeg.carriers.marketing[0];
+  
+  const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      time: format(date, 'HH:mm'),
+      date: format(date, 'MMM dd, yyyy')
+    };
+  };
+
+  const departure = formatDateTime(firstLeg.departure);
+  const arrival = formatDateTime(firstLeg.arrival);
+
   return (
-    <div className="bg-white dark:bg-[#303134] rounded-lg p-6 hover:shadow-lg transition-shadow">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <img
-              src={marketingCarrier.logoUrl}
-              alt={marketingCarrier.name}
-              className="w-8 h-8 rounded-full"
-            />
-            <span className="font-medium text-gray-900 dark:text-white">
+    <Paper 
+      sx={{ 
+        p: 3,
+        bgcolor: darkMode ? 'grey.900' : 'background.paper',
+        color: darkMode ? 'common.white' : 'text.primary',
+        transition: 'all 0.2s',
+        '&:hover': {
+          boxShadow: 6
+        }
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+        {/* Airline Info */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+          <Avatar src={marketingCarrier.logoUrl} alt={marketingCarrier.name}>
+            {marketingCarrier.name[0]}
+          </Avatar>
+          <Box>
+            <Typography variant="subtitle1" color={darkMode ? 'common.white' : 'text.primary'}>
               {marketingCarrier.name}
-            </span>
-          </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Flight #{firstSegment.flightNumber}
-          </div>
-        </div>
+            </Typography>
+            <Typography variant="caption" color={darkMode ? 'grey.400' : 'text.secondary'}>
+              Flight #{firstLeg.segments[0].flightNumber}
+            </Typography>
+          </Box>
+        </Box>
 
-        <div className="flex-1">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="font-semibold text-gray-900 dark:text-white">
-                {departureTime}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {flight.legs[0].origin.displayCode ||
-                  flight.legs[0].origin.name}
-              </div>
-            </div>
-            <div className="flex-1 flex items-center">
-              <div className="h-[2px] flex-1 bg-gray-200 dark:bg-gray-700"></div>
-              <ArrowRight
-                className="mx-2 text-gray-400 dark:text-gray-500"
-                size={20}
-              />
-              <div className="h-[2px] flex-1 bg-gray-200 dark:bg-gray-700"></div>
-            </div>
-            <div>
-              <div className="font-semibold text-gray-900 dark:text-white">
-                {arrivalTime}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {lastLeg.destination.displayCode || lastLeg.destination.name}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Flight Times */}
+        <Box sx={{ flex: 2 }}>
+          <Grid container alignItems="center" spacing={2}>
+            <Grid item xs={12} sm={5}>
+              <Box>
+                <Typography variant="h6" color={darkMode ? 'common.white' : 'text.primary'}>
+                  {departure.time}
+                </Typography>
+                <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  {firstLeg.origin.city} ({firstLeg.origin.displayCode})
+                </Typography>
+                <Typography variant="caption" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  {departure.date}
+                </Typography>
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12} sm={2}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Typography variant="caption" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  {Math.floor(firstLeg.durationInMinutes / 60)}h {firstLeg.durationInMinutes % 60}m
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <Box sx={{ flex: 1, height: '1px', bgcolor: darkMode ? 'grey.700' : 'grey.300' }} />
+                  <ArrowRight className="mx-2" color={darkMode ? theme.palette.grey[400] : theme.palette.grey[600]} />
+                  <Box sx={{ flex: 1, height: '1px', bgcolor: darkMode ? 'grey.700' : 'grey.300' }} />
+                </Box>
+                <Chip 
+                  size="small" 
+                  label={`${firstLeg.stopCount} stop${firstLeg.stopCount !== 1 ? 's' : ''}`}
+                  color={firstLeg.stopCount === 0 ? 'success' : 'default'}
+                  sx={{
+                    bgcolor: darkMode ? 'grey.800' : undefined,
+                    color: darkMode ? 'common.white' : undefined
+                  }}
+                />
+              </Box>
+            </Grid>
 
-        <div className="flex items-center gap-2">
-          <Clock size={16} className="text-gray-500 dark:text-gray-400" />
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {durationFormatted}
-          </span>
-        </div>
+            <Grid item xs={12} sm={5}>
+              <Box sx={{ textAlign: { sm: 'right' } }}>
+                <Typography variant="h6" color={darkMode ? 'common.white' : 'text.primary'}>
+                  {arrival.time}
+                </Typography>
+                <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  {firstLeg.destination.city} ({firstLeg.destination.displayCode})
+                </Typography>
+                <Typography variant="caption" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  {arrival.date}
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
 
-        <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+        {/* Price and Actions */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'stretch', md: 'flex-end' }, gap: 1, flex: 1 }}>
+          <Typography variant="h5" color="primary.main" sx={{ fontWeight: 'bold' }}>
             {flight.price.formatted}
-          </div>
-          <button className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors">
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary"
+            sx={{ borderRadius: '24px' }}
+          >
             Select
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button
+            variant="text"
+            onClick={() => setExpanded(!expanded)}
+            endIcon={expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            sx={{ color: darkMode ? 'grey.400' : 'text.secondary' }}
+          >
+            {expanded ? 'Hide details' : 'Show details'}
+          </Button>
+        </Box>
+      </Box>
+
+      <Collapse in={expanded}>
+        <Divider sx={{ my: 2, borderColor: darkMode ? 'grey.800' : 'grey.200' }} />
+        <Box sx={{ pt: 2 }}>
+          <Typography variant="h6" gutterBottom color={darkMode ? 'common.white' : 'text.primary'}>
+            Flight Details
+          </Typography>
+          
+          {firstLeg.segments.map((segment: any, index: number) => (
+            <Box key={segment.id} sx={{ mb: 3 }}>
+              {index > 0 && (
+                <Box sx={{ 
+                  my: 2, 
+                  px: 2, 
+                  py: 1, 
+                  bgcolor: darkMode ? 'grey.800' : 'grey.100',
+                  borderRadius: 1 
+                }}>
+                  <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                    Layover in {segment.origin.parent.name}: {format(new Date(segment.departure), 'HH:mm')} - {format(new Date(firstLeg.segments[index - 1].arrival), 'HH:mm')}
+                  </Typography>
+                </Box>
+              )}
+              
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar 
+                      src={marketingCarrier.logoUrl} 
+                      sx={{ width: 24, height: 24 }}
+                    />
+                    <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'}>
+                      {segment.marketingCarrier.name} {segment.flightNumber}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={8}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                        {format(new Date(segment.departure), 'HH:mm')}
+                      </Typography>
+                      <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'}>
+                        {segment.origin.parent.name} ({segment.origin.displayCode})
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                        {format(new Date(segment.arrival), 'HH:mm')}
+                      </Typography>
+                      <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'}>
+                        {segment.destination.parent.name} ({segment.destination.displayCode})
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          ))}
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom color={darkMode ? 'common.white' : 'text.primary'}>
+              Fare Conditions
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  Changes
+                </Typography>
+                <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'}>
+                  {flight.farePolicy.isChangeAllowed ? 'Allowed' : 'Not allowed'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  Cancellation
+                </Typography>
+                <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'}>
+                  {flight.farePolicy.isCancellationAllowed ? 'Allowed' : 'Not allowed'}
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  Cabin
+                </Typography>
+                <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'} sx={{ textTransform: 'capitalize' }}>
+                  Economy
+                </Typography>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Typography variant="body2" color={darkMode ? 'grey.400' : 'text.secondary'}>
+                  Baggage
+                </Typography>
+                <Typography variant="body2" color={darkMode ? 'common.white' : 'text.primary'}>
+                  Check airline
+                </Typography>
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
+      </Collapse>
+    </Paper>
   );
 };

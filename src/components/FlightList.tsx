@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlightCard } from './FlightCard';
-import { Flight } from '../types/flight';
-import { Globe } from 'lucide-react';
+import { Globe, Loader2 } from 'lucide-react';
+import { Typography, Box, Paper } from '@mui/material';
 
 interface Props {
   flights: any[];
@@ -13,55 +13,79 @@ interface Props {
 export const FlightList: React.FC<Props> = ({ flights, loading, error, darkMode }) => {
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      </div>
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight={200} gap={2}>
+        <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+        <Typography color="text.secondary">
+          Searching for the best flights...
+        </Typography>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-500 dark:text-red-400 p-4">
-        Error loading flights: {error.message}
-      </div>
+      <Paper 
+        sx={{ 
+          p: 4, 
+          bgcolor: (theme) => darkMode ? 'error.dark' : 'error.light',
+          color: 'error.main'
+        }}
+      >
+        <Typography>{error.message}</Typography>
+      </Paper>
     );
   }
 
   if (!flights.length) {
     return (
-      <div className="space-y-8">
-        <div className="text-xl font-medium text-gray-900 dark:text-white">
-          Find cheap flights from Amman to anywhere
-        </div>
+      <Box sx={{ py: 4 }}>
+        <Typography variant="h5" gutterBottom color="text.primary">
+          Popular Destinations
+        </Typography>
         
-        <div className="flex space-x-4">
-          <span className="px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
-            Amman
-          </span>
-          <span className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
-            Aqaba
-          </span>
-        </div>
+        <Box display="flex" gap={2} sx={{ mb: 4 }}>
+          <Paper sx={{ p: 2, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+            London
+          </Paper>
+          <Paper sx={{ p: 2, bgcolor: 'secondary.light', color: 'secondary.contrastText' }}>
+            Dubai
+          </Paper>
+          <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.contrastText' }}>
+            Istanbul
+          </Paper>
+        </Box>
 
-        <div className="relative rounded-lg overflow-hidden">
-          <div className="aspect-[2/1] bg-gray-900">
-            <Globe className="w-full h-full text-gray-800 dark:text-gray-700" />
-          </div>
-          <button className="absolute inset-0 flex items-center justify-center">
-            <span className="px-6 py-2 bg-blue-500 text-white rounded-full font-medium">
-              Explore destinations
-            </span>
-          </button>
-        </div>
-      </div>
+        <Paper 
+          sx={{ 
+            position: 'relative',
+            height: 300,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden'
+          }}
+        >
+          <Globe className="absolute inset-0 w-full h-full text-gray-200" />
+          <Typography
+            variant="h6"
+            sx={{
+              position: 'relative',
+              zIndex: 1,
+              color: 'text.primary'
+            }}
+          >
+            Explore destinations worldwide
+          </Typography>
+        </Paper>
+      </Box>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
       {flights.map((flight) => (
         <FlightCard key={flight.id} flight={flight} darkMode={darkMode} />
       ))}
-    </div>
+    </Box>
   );
 };
