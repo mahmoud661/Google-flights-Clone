@@ -18,8 +18,8 @@ export interface Flight {
 }
 
 export interface SearchParams {
-  from: string | Airport;  // Now accepts either a stringified Airport object or Airport object
-  to: string | Airport;
+  from: string;
+  to: string;
   departureDate: Date;
   returnDate: Date | null;
   passengers: number;
@@ -28,9 +28,11 @@ export interface SearchParams {
 }
 
 export interface Airport {
-  code: string;
-  name: string;
-  city: string;
-  country: string;
+  skyId: string;
   entityId: string;
+  presentation: {
+    title: string;
+    suggestionTitle: string;
+    subtitle: string;
+  };
 }

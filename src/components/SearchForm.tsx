@@ -3,8 +3,8 @@ import DatePicker from 'react-datepicker';
 import { ArrowLeftRight, Users, ChevronDown, ArrowRightLeft } from 'lucide-react';
 import "react-datepicker/dist/react-datepicker.css";
 import { SearchParams } from '../types/flight';
-import { fetchAirports } from '../services/api';
 import getAirports from '../services/getAirPorts';
+import { searchFlights } from '../services/SearchFlights';
 
 interface Props {
   onSearch: (params: SearchParams) => void;
@@ -13,14 +13,21 @@ interface Props {
 
 interface Airport {
   skyId: string;
+  entityId: string;
   presentation: {
     title: string;
     suggestionTitle: string;
     subtitle: string;
   };
+  navigation: {
+    relevantFlightParams: {
+      skyId: string;
+      entityId: string;
+    }
+  };
 }
 
-export const SearchForm: React.FC<Props> = ({ onSearch, darkMode }) => {
+export const SearchForm: React.FC<Props> = ({ darkMode, onSearch }) => {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [departureDate, setDepartureDate] = useState<Date | null>(new Date());
@@ -33,14 +40,10 @@ export const SearchForm: React.FC<Props> = ({ onSearch, darkMode }) => {
   const [toSuggestions, setToSuggestions] = useState<Airport[]>([]);
   const [showPassengersMenu, setShowPassengersMenu] = useState(false);
   const [showClassMenu, setShowClassMenu] = useState(false);
+  const [selectedFromAirport, setSelectedFromAirport] = useState<Airport | null>(null);
+  const [selectedToAirport, setSelectedToAirport] = useState<Airport | null>(null);
 
-  useEffect(() => {
-    const loadAirports = async () => {
-     
-      console.log("hello")
-    };
-    loadAirports();
-  }, []);
+
 
   const handleFromSearch = async (value: string) => {
     setFrom(value);
@@ -76,25 +79,49 @@ export const SearchForm: React.FC<Props> = ({ onSearch, darkMode }) => {
     }
   };
 
+  const handleSelectFromAirport = (airport: Airport) => {
+    setSelectedFromAirport(airport);
+    setFrom(airport.presentation.suggestionTitle);
+    setFromSuggestions([]);
+  };
+
+  const handleSelectToAirport = (airport: Airport) => {
+    setSelectedToAirport(airport);
+    setTo(airport.presentation.suggestionTitle);
+    setToSuggestions([]);
+  };
+
   const handleSwapLocations = () => {
     const tempFrom = from;
     setFrom(to);
     setTo(tempFrom);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!departureDate) return;
+    if (!departureDate || !selectedFromAirport || !selectedToAirport) {
+      console.error('Missing required fields');
+      return;
+    }
 
-    onSearch({
-      from,
-      to,
-      departureDate,
-      returnDate,
-      passengers,
-      cabinClass,
-      tripType
-    });
+    try {
+      const searchParams = {
+        originSkyId: selectedFromAirport.navigation.relevantFlightParams.skyId,
+        destinationSkyId: selectedToAirport.navigation.relevantFlightParams.skyId,
+        originEntityId: selectedFromAirport.navigation.relevantFlightParams.entityId,
+        destinationEntityId: selectedToAirport.navigation.relevantFlightParams.entityId,
+        date: departureDate.toISOString().split('T')[0],
+        ...(returnDate && { returnDate: returnDate.toISOString().split('T')[0] }),
+        cabinClass: cabinClass.toLowerCase().replace(' ', '-'),
+        adults: passengers.toString()
+      };
+
+      const results = await searchFlights(searchParams);
+      // Instead of logging, update the results in App
+      onSearch(results);
+    } catch (error) {
+      console.error('Error searching flights:', error);
+    }
   };
 
   return (
@@ -193,10 +220,7 @@ export const SearchForm: React.FC<Props> = ({ onSearch, darkMode }) => {
                   <button
                     key={airport.skyId}
                     type="button"
-                    onClick={() => {
-                      setFrom(airport.presentation.suggestionTitle);
-                      setFromSuggestions([]);
-                    }}
+                    onClick={() => handleSelectFromAirport(airport)}
                     className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     {airport.presentation.suggestionTitle} - {airport.presentation.subtitle}
@@ -221,10 +245,7 @@ export const SearchForm: React.FC<Props> = ({ onSearch, darkMode }) => {
                   <button
                     key={airport.skyId}
                     type="button"
-                    onClick={() => {
-                      setTo(airport.presentation.suggestionTitle);
-                      setToSuggestions([]);
-                    }}
+                    onClick={() => handleSelectToAirport(airport)}
                     className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     {airport.presentation.suggestionTitle} - {airport.presentation.subtitle}

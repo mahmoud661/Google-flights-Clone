@@ -1,10 +1,10 @@
 import React from 'react';
-import { Flight } from '../types/flight';
 import { FlightCard } from './FlightCard';
+import { Flight } from '../types/flight';
 import { Globe } from 'lucide-react';
 
 interface Props {
-  flights: Flight[];
+  flights: any[];
   loading: boolean;
   error: Error | null;
   darkMode: boolean;

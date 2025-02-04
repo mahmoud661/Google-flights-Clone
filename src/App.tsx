@@ -1,35 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { useQuery } from "react-query";
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { SearchForm } from "./components/SearchForm";
 import { FlightList } from "./components/FlightList";
-import { searchFlights } from "./services/api";
-import { SearchParams } from "./types/flight";
-import getAirports from "./services/getAirPorts";
-function App() {
-  const [searchParams, setSearchParams] = useState<SearchParams | null>(null);
-  const [darkMode, setDarkMode] = useState(true);
 
-  const {
-    data: flights = [],
-    isLoading,
-    error,
-  } = useQuery(
-    ["flights", searchParams],
-    () => (searchParams ? searchFlights(searchParams) : Promise.resolve([])),
-    { enabled: !!searchParams }
-  );
+function App() {
+  const [darkMode, setDarkMode] = useState(true);
+  const [flights, setFlights] = useState([]); // new state for search results
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle("dark");
   };
-
-  useEffect(() => {
-    getAirports("New York").then((data) => {
-      console.log(data);
-    });
-  }, []);
 
   return (
     <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
@@ -70,16 +51,13 @@ function App() {
                 <h1 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-8">
                   Find Your Next Flight
                 </h1>
-                <SearchForm onSearch={setSearchParams} darkMode={darkMode} />
+                <SearchForm darkMode={darkMode} onSearch={setFlights} />
               </div>
             </div>
-            <FlightList
-              flights={flights}
-              loading={isLoading}
-              error={error as Error}
-              darkMode={darkMode}
-            />
           </div>
+
+          {/* Render flights once available */}
+          <FlightList flights={flights} loading={false} error={null} darkMode={darkMode} />
         </main>
       </div>
     </div>
