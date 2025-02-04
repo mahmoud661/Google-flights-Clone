@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import debounce from 'lodash/debounce';
 import { Loader2 } from 'lucide-react';
-import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { SearchParams } from '../../types/flight';
 import getAirports from '../../services/getAirPorts';
@@ -9,7 +8,6 @@ import { searchFlights } from '../../services/SearchFlights';
 import { getHotels } from '../../services/GetHotels';
 import { TripTypeSelect } from './TripTypeSelect';
 import { PassengerSelect } from './PassengerSelect';
-import { LocationInput } from './LocationInput';
 import { CabinClassSelector } from './CabinClassSelector';
 import { LocationSection } from './LocationSection';
 import { DateSection } from './DateSection';
