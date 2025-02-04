@@ -8,7 +8,6 @@ import { searchFlights } from '../../services/SearchFlights';
 import { TripTypeSelect } from './TripTypeSelect';
 import { PassengerSelect } from './PassengerSelect';
 import { LocationInput } from './LocationInput';
-import { de } from 'date-fns/locale';
 
 interface Props {
   onSearch: (params: SearchParams) => void;

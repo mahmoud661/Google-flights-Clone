@@ -12,6 +12,7 @@ function App() {
   const [flights, setFlights] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -27,6 +28,7 @@ function App() {
     setError(null);
     try {
       setFlights(searchResults);
+      setHasSearched(true);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('An error occurred while searching flights'));
     } finally {
@@ -86,6 +88,7 @@ function App() {
             loading={isLoading}
             error={error}
             darkMode={darkMode}
+            searched={hasSearched}
           />
         </main>
       </div>
