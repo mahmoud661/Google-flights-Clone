@@ -40,7 +40,7 @@ export const FlightList: React.FC<Props> = ({ flights, loading, error, darkMode,
   if (!flights.length) {
     return (
       <Box sx={{ py: 4 }} display="flex" justifyContent="center">
-        <Typography variant="h6" color="text.primary">
+        <Typography variant="h6" color={darkMode ? "grey.300" : "text.primary"}>
           {!searched ? "Enter your destination to start." : "No flights found."}
         </Typography>
       </Box>

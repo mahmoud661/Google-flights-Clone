@@ -1,22 +1,24 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
-interface Airport {
-  skyId: string;
+interface Location {
+  skyId?: string;
   entityId: string;
-  presentation: {
+  presentation?: {
     title: string;
     suggestionTitle: string;
     subtitle: string;
   };
+  entityName?: string;
+  hierarchy?: string;
 }
 
 interface Props {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  onSelect: (airport: Airport) => void;
-  suggestions: Airport[];
+  onSelect: (location: Location) => void;
+  suggestions: Location[];
   isLoading: boolean;
   darkMode: boolean;
   placeholder?: string;
@@ -32,6 +34,29 @@ export const LocationInput: React.FC<Props> = ({
   darkMode,
   placeholder = "Enter city or airport"
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node) &&
+          inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        // Close suggestions
+        onChange(value); // Keep the current value
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [value, onChange]);
+
+  const formatSuggestion = (location: Location) => {
+    if (location.presentation) {
+      return `${location.presentation.suggestionTitle} - ${location.presentation.subtitle}`;
+    }
+    return `${location.entityName}, ${location.hierarchy}`;
+  };
+
   return (
     <div>
       <label className={`block text-sm font-medium mb-1 ${
@@ -41,6 +66,7 @@ export const LocationInput: React.FC<Props> = ({
       </label>
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -58,17 +84,20 @@ export const LocationInput: React.FC<Props> = ({
         )}
 
         {suggestions.length > 0 && (
-          <div className={`absolute w-full mt-1 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto
-            ${darkMode ? 'bg-[#303134]' : 'bg-white'}`}>
-            {suggestions.map((airport) => (
+          <div
+            ref={suggestionsRef}
+            className={`absolute w-full mt-1 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto
+              ${darkMode ? 'bg-[#303134]' : 'bg-white'}`}
+          >
+            {suggestions.map((location) => (
               <button
-                key={airport.skyId}
+                key={location.entityId}
                 type="button"
-                onClick={() => onSelect(airport)}
+                onClick={() => onSelect(location)}
                 className={`block w-full text-left px-4 py-2 
                   ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
               >
-                {airport.presentation.suggestionTitle} - {airport.presentation.subtitle}
+                {formatSuggestion(location)}
               </button>
             ))}
           </div>
